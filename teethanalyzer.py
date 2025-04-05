@@ -6,105 +6,88 @@ class TeethAnalyzer:
     def __init__(self):
         self.analysis_history = []
     
+    def _read_image(self, image_path):
+        """Helper function to read and preprocess an image."""
+        image = cv2.imread(image_path)
+        if image is None:
+            raise ValueError("Failed to load image")
+        return image
+    
+    def _preprocess_image(self, image):
+        """Preprocess image for better analysis."""
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        return clahe.apply(gray)
+    
     def detect_cavities(self, image_path):
-        """Detects cavities in a teeth image using simple image processing."""
-        image = cv2.imread(image_path, 0)
-        _, threshold = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
-        cavity_count = np.sum(threshold == 0)
-        result = "Cavities detected" if cavity_count > 500 else "No cavities detected"
+        """Detects cavities using image processing."""
+        image = self._preprocess_image(self._read_image(image_path))
+        thresh = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                       cv2.THRESH_BINARY_INV, 11, 2)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cavity_count = len([cnt for cnt in contours if cv2.contourArea(cnt) > 50])
+        result = f"Found {cavity_count} potential cavities. "
+        result += "Immediate dental consultation recommended." if cavity_count > 5 else "Schedule a dental checkup." if cavity_count > 0 else "No significant cavities detected."
         self.analysis_history.append((datetime.now(), result))
         return result
     
-    def check_gum_health(self, redness_level):
-        """Evaluates gum health based on redness level."""
-        if redness_level > 70:
-            return "High risk of gum disease! Visit a dentist."
-        elif redness_level > 40:
-            return "Moderate gum inflammation detected. Maintain oral hygiene."
-        else:
-            return "Gum health is good!"
-    
     def measure_teeth_whiteness(self, image_path):
-        """Measures teeth whiteness using grayscale analysis."""
-        image = cv2.imread(image_path, 0)
-        avg_brightness = np.mean(image)
-        if avg_brightness > 180:
-            return "Teeth are very white. Good condition!"
-        elif avg_brightness > 120:
-            return "Teeth are moderately white. Consider whitening treatments."
-        else:
-            return "Teeth are yellowing. Professional cleaning recommended."
+        """Measures teeth whiteness."""
+        original_image = self._read_image(image_path)
+        preprocessed_image = self._preprocess_image(original_image)
+        _, teeth_mask = cv2.threshold(preprocessed_image, 180, 255, cv2.THRESH_BINARY)
+        whiteness_average = np.mean(preprocessed_image[teeth_mask > 0])
+        return "Excellent" if whiteness_average > 200 else "Good" if whiteness_average > 170 else "Average - Consider whitening" if whiteness_average > 140 else "Below average - Professional cleaning recommended."
     
-    def bad_breath_risk(self, last_brush_time, diet):
-        """Analyzes bad breath risk based on brushing habits and diet."""
-        hours_since_brush = (datetime.now() - last_brush_time).total_seconds() / 3600
-        risk_score = hours_since_brush * 2 + (5 if 'garlic' in diet or 'onion' in diet else 0)
-        return "High bad breath risk!" if risk_score > 10 else "Breath is likely fresh."
+    def detect_plaque(self, image_path):
+        """Detects plaque levels."""
+        image = self._preprocess_image(self._read_image(image_path))
+        plaque_count = np.sum(image < 100)
+        return "High plaque buildup detected!" if plaque_count > 1000 else "Low plaque levels. Maintain hygiene."
     
-    def teeth_alignment_check(self, teeth_positions):
-        """Checks if teeth are misaligned based on given positions."""
-        misalignment = sum([1 for pos in teeth_positions if abs(pos) > 5])
-        return f"{misalignment} teeth appear misaligned. Consider orthodontic consultation." if misalignment else "Teeth alignment is good!"
+    def check_teeth_alignment(self, image_path):
+        """Analyzes teeth alignment."""
+        image = self._preprocess_image(self._read_image(image_path))
+        edges = cv2.Canny(image, 50, 150)
+        alignment_score = np.sum(edges > 0)
+        return "Teeth misalignment detected. Consider orthodontic consultation." if alignment_score > 5000 else "Teeth alignment is normal."
     
-    def plaque_detection(self, plaque_level):
-        """Detects plaque level and provides advice."""
-        if plaque_level > 70:
-            return "High plaque buildup! Immediate cleaning needed."
-        elif plaque_level > 40:
-            return "Moderate plaque detected. Brush and floss regularly."
-        else:
-            return "Plaque levels are low. Keep up good oral hygiene!"
+    def detect_gum_inflammation(self, image_path):
+        """Detects gum inflammation."""
+        image = self._read_image(image_path)
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        lower_red, upper_red = np.array([0, 70, 50]), np.array([10, 255, 255])
+        mask1 = cv2.inRange(hsv, lower_red, upper_red)
+        lower_red, upper_red = np.array([170, 70, 50]), np.array([180, 255, 255])
+        mask2 = cv2.inRange(hsv, lower_red, upper_red)
+        red_mask = mask1 + mask2
+        inflammation_score = np.sum(red_mask > 0) / red_mask.size
+        return "Significant inflammation detected. Consult dentist." if inflammation_score > 0.1 else "Mild inflammation. Improve oral hygiene." if inflammation_score > 0.05 else "Gum health appears normal."
     
-    def tooth_sensitivity_test(self, response_to_cold):
-        """Checks tooth sensitivity based on reaction to cold items."""
-        if response_to_cold > 7:
-            return "Severe sensitivity detected! Visit a dentist."
-        elif response_to_cold > 4:
-            return "Moderate sensitivity. Use a sensitivity toothpaste."
-        else:
-            return "Teeth sensitivity is normal."
+    def analyze_enamel_strength(self, image_path):
+        """Estimates enamel strength."""
+        image = self._preprocess_image(self._read_image(image_path))
+        return "Weak enamel detected. Reduce acidic foods." if np.var(image) < 500 else "Enamel strength is good!"
     
-    def enamel_strength_check(self, acid_exposure, brushing_habit):
-        """Assesses enamel health based on acid exposure and brushing habits."""
-        if acid_exposure > 6 or brushing_habit < 2:
-            return "Enamel weakening detected. Reduce acidic foods and improve brushing."
-        return "Enamel health is good. Keep up proper care!"
+    def detect_tooth_sensitivity(self, image_path):
+        """Detects tooth sensitivity."""
+        image = self._preprocess_image(self._read_image(image_path))
+        return "High sensitivity risk detected!" if np.std(image) > 50 else "Tooth sensitivity is within normal range."
     
-    def grinding_teeth_risk(self, stress_level, jaw_pain):
-        """Evaluates bruxism (teeth grinding) risk based on stress and pain levels."""
-        if stress_level > 7 or jaw_pain > 5:
-            return "High risk of teeth grinding. Consider using a night guard."
-        return "Low risk of teeth grinding."
-    
-    def oral_hygiene_score(self, brushing, flossing, diet):
-        """Calculates an oral hygiene score based on habits."""
-        score = brushing * 2 + flossing * 3 - (3 if 'sugar' in diet else 0)
-        return f"Oral hygiene score: {max(0, min(10, score))}/10. Maintain good habits!"
-    
-    def analyze_teeth_condition(self, image_path):
-        """Analyzes the teeth image and suggests possible treatments."""
-        image = cv2.imread(image_path, 0)
-        avg_brightness = np.mean(image)
-        _, threshold = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
-        cavity_count = np.sum(threshold == 0)
-        
-        report = "Teeth Analysis Report:\n"
-        
-        if cavity_count > 500:
-            report += "- Cavities detected. Suggested treatment: Fillings or fluoride treatment.\n"
-        else:
-            report += "- No significant cavities detected.\n"
-        
-        if avg_brightness < 120:
-            report += "- Yellowing detected. Suggested treatment: Whitening or professional cleaning.\n"
-        elif avg_brightness < 180:
-            report += "- Moderate whiteness. Maintain good oral hygiene.\n"
-        else:
-            report += "- Teeth are in great condition!\n"
-        
+    def analyze_teeth_health(self, image_path):
+        """Performs a full teeth health analysis."""
+        results = [
+            self.detect_cavities(image_path),
+            self.measure_teeth_whiteness(image_path),
+            self.detect_plaque(image_path),
+            self.check_teeth_alignment(image_path),
+            self.detect_gum_inflammation(image_path),
+            self.analyze_enamel_strength(image_path)
+        ]
+        report = "\n- ".join(results)
         self.analysis_history.append((datetime.now(), report))
-        return report
-        
-    def get_analysis_history(self):        
-        return self.analysis_history
+        return f"Teeth Health Report:\n- {report}"
     
+    def get_analysis_history(self):
+        """Returns the history of analyses performed."""
+        return self.analysis_history
