@@ -1,86 +1,104 @@
 from datetime import datetime
+import cv2
+import numpy as np
 
 class OralHealthCheck:
     def __init__(self):
         self.checkup_history = []
 
     def check_plaque_levels(self, image_path):
-        """Analyze plaque levels from the given image."""
-        result = f"Plaque detected in moderate levels from {image_path}."
-        self.store_checkup("Plaque Levels", result)
-        return result
+        """Analyze plaque levels from an image using edge detection."""
+        image = cv2.imread(image_path, 0)
+        edges = cv2.Canny(image, 100, 200)
+        plaque_level = np.sum(edges) / 100000  # Rough intensity estimation
+        return f"Plaque Level: {'High' if plaque_level > 50 else 'Moderate' if plaque_level > 20 else 'Low'}"
 
-    def detect_bad_breath(self, symptoms):
-        """Determine if bad breath is present based on symptoms."""
-        if "dry mouth" in symptoms or "bad taste" in symptoms:
-            result = "Possible bad breath detected due to dry mouth."
-        else:
-            result = "No significant signs of bad breath detected."
-        self.store_checkup("Bad Breath", result)
-        return result
+    def detect_bad_breath(self):
+        """Detect bad breath based on symptoms."""
+        symptoms = input("Do you have dry mouth or a bad taste? (yes/no): ").strip().lower()
+        return "Possible bad breath due to dry mouth." if symptoms == "yes" else "No significant signs of bad breath."
 
-    def check_sensitivity(self, user_feedback):
-        """Assess teeth sensitivity based on feedback."""
-        if user_feedback.lower() in ["hot", "cold", "sweet"]:
-            result = f"Teeth sensitivity detected for {user_feedback}."
-        else:
-            result = "No significant sensitivity detected."
-        self.store_checkup("Sensitivity", result)
-        return result
+    def check_sensitivity(self):
+        """Assess teeth sensitivity based on user input."""
+        user_feedback = input("What triggers sensitivity? (hot/cold/sweet/none): ").strip().lower()
+        return f"Teeth sensitivity detected for {user_feedback}." if user_feedback in ["hot", "cold", "sweet"] else "No sensitivity detected."
 
     def detect_tooth_decay(self, image_path):
-        """Analyze signs of tooth decay from the image."""
-        result = f"Possible early-stage tooth decay detected in {image_path}."
-        self.store_checkup("Tooth Decay", result)
-        return result
+        """Analyze an image for early signs of tooth decay."""
+        image = cv2.imread(image_path, 0)
+        decay_score = np.mean(image)  # Higher mean = healthier teeth
+        return "Possible early-stage tooth decay detected." if decay_score < 100 else "Teeth appear healthy."
 
-    def check_mouth_ulcers(self, symptoms):
-        """Check for mouth ulcers based on symptoms."""
-        if "painful sores" in symptoms or "red spots" in symptoms:
-            result = "Mouth ulcers detected. Consider oral gel treatment."
-        else:
-            result = "No signs of mouth ulcers detected."
-        self.store_checkup("Mouth Ulcers", result)
-        return result
+    def check_mouth_ulcers(self):
+        """Detect mouth ulcers based on symptoms."""
+        symptoms = input("Do you have painful sores or red spots in your mouth? (yes/no): ").strip().lower()
+        return "Mouth ulcers detected. Consider oral gel treatment." if symptoms == "yes" else "No signs of mouth ulcers."
 
-    def check_gum_bleeding(self, symptoms):
-        """Determine gum bleeding based on symptoms."""
-        if "blood on brushing" in symptoms:
-            result = "Gum bleeding detected. Possible early gum disease."
-        else:
-            result = "No gum bleeding detected."
-        self.store_checkup("Gum Bleeding", result)
-        return result
+    def check_gum_bleeding(self):
+        """Analyze gum bleeding based on user symptoms."""
+        symptoms = input("Do you see blood while brushing? (yes/no): ").strip().lower()
+        return "Gum bleeding detected. Possible early gum disease." if symptoms == "yes" else "No gum bleeding detected."
 
-    def check_jaw_pain(self, symptoms):
-        """Analyze jaw pain based on user feedback."""
-        if "difficulty chewing" in symptoms:
-            result = "Jaw pain detected. Possible TMJ disorder."
-        else:
-            result = "No significant jaw pain detected."
-        self.store_checkup("Jaw Pain", result)
-        return result
+    def check_jaw_pain(self):
+        """Analyze jaw pain based on user input."""
+        symptoms = input("Do you have difficulty chewing? (yes/no): ").strip().lower()
+        return "Jaw pain detected. Possible TMJ disorder." if symptoms == "yes" else "No significant jaw pain detected."
 
     def detect_tongue_health(self, image_path):
-        """Analyze tongue for signs of health issues."""
-        result = f"Healthy tongue detected in {image_path}."
-        self.store_checkup("Tongue Health", result)
-        return result
+        """Check tongue health based on image brightness."""
+        image = cv2.imread(image_path, 0)
+        brightness = np.mean(image)  # Darker areas could indicate issues
+        return "Healthy tongue detected." if brightness > 100 else "Possible tongue health issues detected."
 
-    def check_for_infections(self, symptoms):
-        """Check for oral infections based on symptoms."""
-        if "swelling" in symptoms or "pus" in symptoms:
-            result = "Possible oral infection detected. Consult a dentist."
+    def check_for_infections(self):
+        """Detect oral infections based on symptoms."""
+        symptoms = input("Do you have swelling or pus in your mouth? (yes/no): ").strip().lower()
+        return "Possible oral infection detected. Consult a dentist." if symptoms == "yes" else "No signs of oral infections."
+
+def main():
+    health_checker = OralHealthCheck()
+
+    while True:
+        print("\nOral Health Checker")
+        print("1. Check Plaque Levels (Requires Image)")
+        print("2. Detect Bad Breath")
+        print("3. Check Teeth Sensitivity")
+        print("4. Detect Tooth Decay (Requires Image)")
+        print("5. Check for Mouth Ulcers")
+        print("6. Check for Gum Bleeding")
+        print("7. Check Jaw Pain")
+        print("8. Detect Tongue Health (Requires Image)")
+        print("9. Check for Oral Infections")
+        print("10. Exit")
+
+        choice = input("Enter your choice (1-10): ").strip()
+
+        if choice == "1":
+            image_path = input("Enter image path for plaque analysis: ").strip()
+            print(health_checker.check_plaque_levels(image_path))
+        elif choice == "2":
+            print(health_checker.detect_bad_breath())
+        elif choice == "3":
+            print(health_checker.check_sensitivity())
+        elif choice == "4":
+            image_path = input("Enter image path for tooth decay analysis: ").strip()
+            print(health_checker.detect_tooth_decay(image_path))
+        elif choice == "5":
+            print(health_checker.check_mouth_ulcers())
+        elif choice == "6":
+            print(health_checker.check_gum_bleeding())
+        elif choice == "7":
+            print(health_checker.check_jaw_pain())
+        elif choice == "8":
+            image_path = input("Enter image path for tongue health analysis: ").strip()
+            print(health_checker.detect_tongue_health(image_path))
+        elif choice == "9":
+            print(health_checker.check_for_infections())
+        elif choice == "10":
+            print("Exiting Oral Health Checker. Stay healthy! 😊")
+            break
         else:
-            result = "No signs of oral infections detected."
-        self.store_checkup("Oral Infections", result)
-        return result
+            print("Invalid choice! Please enter a number between 1-10.")
 
-    def get_checkup_history(self):
-        """Retrieve checkup history."""
-        return self.checkup_history
-
-    def store_checkup(self, checkup_type, result):
-        """Store checkup result in history."""
-        timestamp = datetime.now()
-        self.checkup_history.append((timestamp, checkup_type, result))
+if __name__ == "__main__":
+    main()
