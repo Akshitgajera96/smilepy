@@ -7,6 +7,7 @@ from checkup_medicine import CheckupMedicineReminder
 from datetime import datetime
 
 def run_analysis(image_path):
+    
     try:
         img = cv2.imread(image_path)
         if img is None:
@@ -39,7 +40,7 @@ def run_analysis(image_path):
 def test_patient_record():
     try:
         patient = PatientRecord("John Doe", 30)
-        image_path = r"C:\\Users\\gajer\\OneDrive\\Desktop\\sem-4\\python\\smilepy\\download.jpg"
+        image_path = r"C:\Users\gajer\OneDrive\Desktop\sem-4\pyhton\smilepy\download.jpg"
         
         print("\n=== Patient Record Test ===\n")
         print(f"Patient: {patient.user_name}, Age: {patient.age}")
@@ -70,7 +71,7 @@ def test_patient_record():
 def test_oral_health_check():
     try:
         oral_check = OralHealthCheck()
-        image_path = r"C:\\Users\\gajer\\OneDrive\\Desktop\\sem-4\\python\\smilepy\\download.jpg"
+        image_path = r"C:\Users\gajer\OneDrive\Desktop\sem-4\pyhton\smilepy\download.jpg"
 
         print("\n=== Oral Health Check Test ===\n")
         print("1. Plaque Levels:")
@@ -147,7 +148,7 @@ def test_checkup_medicine_reminder():
         print(f"\nError during checkup & medicine reminder test: {str(e)}")
 
 if __name__ == "__main__":
-    image_path = r'C:\Users\gajer\OneDrive\Desktop\sem-4\python\smilepy\download.jpg'
+    image_path = r'C:\Users\gajer\OneDrive\Desktop\sem-4\pyhton\smilepy\download.jpg'
 
     print("\n=== Running SmilePy System ===\n")
     

@@ -8,6 +8,7 @@ class TeethAnalyzer:
     
     def _read_image(self, image_path):
         """Reads and validates an image."""
+        image_path = r"C:\Users\gajer\OneDrive\Desktop\sem-4\pyhton\smilepy\download.jpg"
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         if image is None:
             raise ValueError("Invalid image or path. Please provide a valid image.")
